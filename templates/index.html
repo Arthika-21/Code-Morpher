@@ -6,160 +6,94 @@
   <title>Code Morpher</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-gray-950 text-white flex h-screen overflow-hidden">
 
-<body class="bg-gray-950 text-white min-h-screen flex flex-col items-center justify-center font-sans">
-  <!-- Navbar -->
-  <nav class="w-full bg-gray-900 py-4 px-6 flex items-center justify-between shadow-md fixed top-0 left-0 z-10">
-    <h1 class="text-xl sm:text-2xl font-bold text-indigo-400">Code Morpher</h1>
-  </nav>
+  <!-- Sidebar -->
+  <div class="w-64 bg-gray-900 text-white flex flex-col p-4">
+    <button id="new-chat-btn" class="mb-4 bg-green-600 hover:bg-green-700 p-2 rounded text-center font-semibold">
+      + New Chat
+    </button>
+  </div>
 
-  <!-- Main Container -->
-  <div class="w-full max-w-4xl bg-gray-900 shadow-2xl rounded-2xl p-6 sm:p-10 mt-24 flex flex-col space-y-6">
-    <h2 class="text-2xl sm:text-3xl font-semibold text-center text-indigo-400 mb-4">
-      Hello, how can I help you?
-    </h2>
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col bg-gray-950">
 
-    <!-- ✅ Chat Container (required for displaying conversation) -->
-    <div
-      id="chatContainer"
-      class="flex-1 overflow-y-auto space-y-4 max-h-[60vh] p-4 bg-gray-800 rounded-xl border border-gray-700"
-    ></div>
 
-    <!-- Input Box -->
-    <div class="flex items-center bg-gray-800 rounded-full px-4 sm:px-6 py-3">
+    <!-- Input Area -->
+    <div class="border-t border-gray-700 p-4 flex items-center space-x-2">
       <input
-        id="dslInput"
+        id="user-input"
         type="text"
-        placeholder="Enter your prompt..."
-        class="flex-grow bg-transparent text-gray-300 placeholder-gray-500 focus:outline-none text-base sm:text-lg"
+        placeholder="Type your message..."
+        class="flex-1 p-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
       />
       <button
-        id="sendBtn"
-        class="ml-3 bg-indigo-600 hover:bg-indigo-700 rounded-full p-3 transition disabled:opacity-50"
-        disabled
+        id="send-button"
+        class="p-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-lg"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2"
-          stroke="white"
-          class="w-5 h-5 sm:w-6 sm:h-6"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
+        ➤
       </button>
     </div>
   </div>
 
+  <!-- JavaScript -->
   <script>
-    const chatContainer = document.getElementById("chatContainer");
-    const input = document.getElementById("dslInput");
-    const sendBtn = document.getElementById("sendBtn");
+    const sendButton = document.getElementById("send-button");
+    const userInput = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+    const newChatBtn = document.getElementById("new-chat-btn");
 
-    // Enable send button only when input has text
-    input.addEventListener("input", () => {
-      sendBtn.disabled = input.value.trim() === "";
-    });
-
-    // Load chat history
-    window.onload = function () {
-      const history = JSON.parse(localStorage.getItem("chatHistory")) || [];
-      history.forEach((item) => renderMessage(item.prompt, item.response));
+    // Start new chat
+    newChatBtn.onclick = () => {
+      userInput.value = "";
+      chatBox.innerHTML = "";
     };
 
-    async function generateJava() {
-      const userInput = input.value.trim();
-      if (!userInput) return;
+    // Function to send message
+    async function sendMessage() {
+      const prompt = userInput.value.trim();
+      if (!prompt) return;
 
-      renderMessage(userInput, null); // show user bubble
-      input.value = "";
-      sendBtn.disabled = true;
+      // Add user message
+      chatBox.innerHTML += `
+        <div class="text-right"><strong>You:</strong> ${prompt}</div>
+      `;
+      userInput.value = "";
+      chatBox.scrollTop = chatBox.scrollHeight;
 
       try {
-        const res = await fetch("https://code-morpher-a.onrender.com/generate", {
+        const response = await fetch("http://127.0.0.1:5000/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dsl_input: userInput }),
+          body: JSON.stringify({ prompt }),
         });
 
-        const data = await res.json();
-        const response = data.java_code || data.error || "Error generating response.";
+        if (!response.ok) throw new Error("Network error");
+        const data = await response.json();
 
-        renderMessage(userInput, response);
-        saveToHistory(userInput, response);
-      } catch (err) {
-        renderMessage(userInput, "❌ Failed to connect to backend. Please try again.");
+        // Add bot response
+        chatBox.innerHTML += `
+          <div class="text-left"><strong>Bot:</strong> ${data.output}</div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+      } catch (error) {
+        chatBox.innerHTML += `
+          <div class="text-red-500 text-left">❌ Failed to connect to backend.</div>
+        `;
       }
     }
 
-    // Display both user & bot messages
-    function renderMessage(prompt, response) {
-      const chatBox = document.createElement("div");
-      chatBox.className = "space-y-2";
-
-      // User bubble
-      const userBubble = document.createElement("div");
-      userBubble.className =
-        "bg-indigo-600 text-white p-3 rounded-xl max-w-[90%] self-end ml-auto";
-      userBubble.textContent = prompt;
-      chatBox.appendChild(userBubble);
-
-      // Bot bubble (if response exists)
-      if (response) {
-        const botContainer = document.createElement("div");
-        botContainer.className =
-          "bg-gray-700 text-green-400 p-3 rounded-xl max-w-[90%] whitespace-pre-wrap relative";
-
-        const copyBtn = document.createElement("button");
-        copyBtn.textContent = "Copy";
-        copyBtn.className =
-          "absolute top-2 right-3 text-xs bg-indigo-600 hover:bg-indigo-700 px-2 py-1 rounded-md";
-        copyBtn.onclick = () => copyCode(response, copyBtn);
-
-        const codeBlock = document.createElement("pre");
-        codeBlock.textContent = response;
-
-        botContainer.appendChild(copyBtn);
-        botContainer.appendChild(codeBlock);
-        chatBox.appendChild(botContainer);
+    // ✅ Make Enter key send message
+    userInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
       }
-
-      chatContainer.appendChild(chatBox);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function copyCode(code, btn) {
-      navigator.clipboard.writeText(code).then(() => {
-        btn.textContent = "Copied!";
-        setTimeout(() => (btn.textContent = "Copy"), 2000);
-      });
-    }
-
-    function saveToHistory(prompt, response) {
-      let history = JSON.parse(localStorage.getItem("chatHistory")) || [];
-      history.push({ prompt, response });
-      localStorage.setItem("chatHistory", JSON.stringify(history));
-    }
-
-    // ✅ Enable both Enter and Send button
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("dslInput");
-      const sendBtn = document.getElementById("sendBtn");
-
-      // Enter key
-      input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" && !sendBtn.disabled) {
-          event.preventDefault();
-          generateJava();
-        }
-      });
-
-      // Send button click
-      sendBtn.addEventListener("click", function () {
-        if (!sendBtn.disabled) generateJava();
-      });
     });
+
+    // ✅ Make Send button work
+    sendButton.addEventListener("click", sendMessage);
   </script>
 </body>
 </html>
