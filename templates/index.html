@@ -3,97 +3,139 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Code Morpher</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Vibism</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #1e1f22;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .navbar {
+      background-color: #111;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 2rem;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      background-color: #33343a;
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      width: 90%;
+      max-width: 800px;
+    }
+
+    .input-container input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 1rem;
+      padding: 0.8rem;
+    }
+
+    .input-container button {
+      background-color: #e3e3e3;
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .input-container button:hover {
+      background-color: #bdbdbd;
+    }
+
+    .input-container svg {
+      width: 22px;
+      height: 22px;
+      color: #111;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+      }
+      .input-container {
+        width: 95%;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-950 text-white flex h-screen overflow-hidden">
+<body>
+  <nav class="navbar">
+    <div class="logo">Vibism</div>
+  </nav>
 
-  <!-- Sidebar -->
-  <div class="w-64 bg-gray-900 text-white flex flex-col p-4">
-    <button id="new-chat-btn" class="mb-4 bg-green-600 hover:bg-green-700 p-2 rounded text-center font-semibold">
-      + New Chat
-    </button>
-  </div>
-
-  <!-- Main Chat Area -->
-  <div class="flex-1 flex flex-col bg-gray-950">
-
-
-    <!-- Input Area -->
-    <div class="border-t border-gray-700 p-4 flex items-center space-x-2">
-      <input
-        id="user-input"
-        type="text"
-        placeholder="Type your message..."
-        class="flex-1 p-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-      />
-      <button
-        id="send-button"
-        class="p-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-lg"
-      >
-        ➤
+  <main class="main-content">
+    <h1 class="title">Hello, How Can I help you?</h1>
+    <div class="input-container">
+      <input type="text" id="userInput" placeholder="Ask something..." />
+      <button id="sendBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
       </button>
     </div>
-  </div>
+  </main>
 
-  <!-- JavaScript -->
   <script>
-    const sendButton = document.getElementById("send-button");
-    const userInput = document.getElementById("user-input");
-    const chatBox = document.getElementById("chat-box");
-    const newChatBtn = document.getElementById("new-chat-btn");
+    const input = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
 
-    // Start new chat
-    newChatBtn.onclick = () => {
-      userInput.value = "";
-      chatBox.innerHTML = "";
-    };
-
-    // Function to send message
-    async function sendMessage() {
-      const prompt = userInput.value.trim();
-      if (!prompt) return;
-
-      // Add user message
-      chatBox.innerHTML += `
-        <div class="text-right"><strong>You:</strong> ${prompt}</div>
-      `;
-      userInput.value = "";
-      chatBox.scrollTop = chatBox.scrollHeight;
-
-      try {
-        const response = await fetch("http://127.0.0.1:5000/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-
-        if (!response.ok) throw new Error("Network error");
-        const data = await response.json();
-
-        // Add bot response
-        chatBox.innerHTML += `
-          <div class="text-left"><strong>Bot:</strong> ${data.output}</div>
-        `;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-      } catch (error) {
-        chatBox.innerHTML += `
-          <div class="text-red-500 text-left">❌ Failed to connect to backend.</div>
-        `;
+    function sendMessage() {
+      const message = input.value.trim();
+      if (message !== "") {
+        console.log("User entered:", message);
+        input.value = "";
       }
     }
 
-    // ✅ Make Enter key send message
-    userInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
     });
-
-    // ✅ Make Send button work
-    sendButton.addEventListener("click", sendMessage);
   </script>
 </body>
 </html>
