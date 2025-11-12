@@ -125,17 +125,26 @@
       history.push({ prompt, response });
       localStorage.setItem("chatHistory", JSON.stringify(history));
     }
+ // ✅ Make both Enter key and Send button work
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("dslInput");
+      const sendBtn = document.getElementById("sendBtn");
 
-        // Trigger send on pressing Enter key
-    input.addEventListener("keypress", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault(); // Prevent accidental form submission or newline
-        if (!sendBtn.disabled) {
-          generateJava(); // Call your existing function
+      // Handle Enter key
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !sendBtn.disabled) {
+          event.preventDefault(); // stop new line
+          generateJava(); // trigger generation
         }
-      }
-    });
+      });
 
+      // Handle Send button click
+      sendBtn.addEventListener("click", function () {
+        if (!sendBtn.disabled) {
+          generateJava();
+        }
+      });
+    });
   </script>
 </body>
 </html>
