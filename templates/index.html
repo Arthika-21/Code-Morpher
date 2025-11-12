@@ -125,6 +125,17 @@
       history.push({ prompt, response });
       localStorage.setItem("chatHistory", JSON.stringify(history));
     }
+
+        // Trigger send on pressing Enter key
+    input.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault(); // Prevent accidental form submission or newline
+        if (!sendBtn.disabled) {
+          generateJava(); // Call your existing function
+        }
+      }
+    });
+
   </script>
 </body>
 </html>
